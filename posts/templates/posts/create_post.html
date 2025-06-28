@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Post - School Social{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="mb-0">Create New Post</h2>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ form.text.id_for_label }}" class="form-label">Post Content</label>
+                        {{ form.text }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ form.media_type.id_for_label }}" class="form-label">Media Type</label>
+                        {{ form.media_type }}
+                    </div>
+                    
+                    <div id="media-fields">
+                        <div class="mb-3" id="image-field" style="display: none;">
+                            <label for="{{ form.images.id_for_label }}" class="form-label">Images (Max 5)</label>
+                            {{ form.images }}
+                            {% if form.images.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.images.errors }}
+                            </div>
+                            {% endif %}
+                            <small class="text-muted">Supported formats: JPEG, PNG</small>
+                        </div>
+                        <div class="mb-3" id="video-field" style="display: none;">
+                            <label for="{{ form.video.id_for_label }}" class="form-label">Video</label>
+                            {{ form.video }}
+                            {% if form.video.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.video.errors }}
+                            </div>
+                            {% endif %}
+                            <small class="text-muted">Max size: 100MB</small>
+                        </div>
+                        <div class="mb-3" id="file-field" style="display: none;">
+                            <label for="{{ form.files.id_for_label }}" class="form-label">Files (Max 5)</label>
+                            {{ form.files }}
+                            {% if form.files.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.files.errors }}
+                            </div>
+                            {% endif %}
+                            <small class="text-muted">Max size: 50MB per file</small>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">Create Post</button>
+                    
+                    {% if form.errors %}
+                    <div class="alert alert-danger mt-3">
+                        <h4 class="alert-heading">Form Errors</h4>
+                        <ul>
+                            {% for field in form %}
+                                {% if field.errors %}
+                                    <li>{{ field.label }}: {{ field.errors|join:", " }}</li>
+                                {% endif %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const mediaType = document.querySelector('select[name="media_type"]');
+    const imageField = document.getElementById('image-field');
+    const videoField = document.getElementById('video-field');
+    const fileField = document.getElementById('file-field');
+
+    function updateFields() {
+        const value = mediaType.value;
+        imageField.style.display = value === 'image' || value === 'mixed' ? 'block' : 'none';
+        videoField.style.display = value === 'video' || value === 'mixed' ? 'block' : 'none';
+        fileField.style.display = value === 'file' || value === 'mixed' ? 'block' : 'none';
+    }
+
+    mediaType.addEventListener('change', updateFields);
+    updateFields(); // Initial update
+});
+</script>
+{% endblock %}

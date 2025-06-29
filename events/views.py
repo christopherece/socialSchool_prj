@@ -5,11 +5,11 @@ from django.utils import timezone
 from .models import Event
 from .forms import EventForm
 
-def is_admin(user):
-    return user.role == 'admin'
+def is_admin_or_teacher(user):
+    return user.role in ['admin', 'teacher']
 
 @login_required
-@user_passes_test(is_admin)
+@user_passes_test(is_admin_or_teacher)
 def create_event(request):
     if request.method == 'POST':
         form = EventForm(request.POST)

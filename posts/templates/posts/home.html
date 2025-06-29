@@ -70,6 +70,40 @@
                     <p class="text-muted">No active users at the moment.</p>
                     {% endfor %}
                 </div>
+            </div>
+        </div>
+
+        <!-- Upcoming Events -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="card-title">Upcoming Events</h5>
+                    {% if user.role in 'admin teacher' %}
+                    <a href="{% url 'events:create' %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus me-2"></i>Add Event
+                    </a>
+                    {% endif %}
+                </div>
+                <ul class="list-unstyled mb-0">
+                    {% for event in upcoming_events %}
+                    <li class="event-item mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1"><a href="{% url 'events:detail' event.id %}" class="username">{{ event.title }}</a></h6>
+                                <small class="text-muted">
+                                    {{ event.date|date:"M j" }} at {{ event.time|time:"H:i" }}
+                                </small>
+                            </div>
+                            <span class="badge bg-secondary text-light">
+                                {{ event.get_event_type_display }}
+                            </span>
+                        </div>
+                    </li>
+                    {% empty %}
+                    <li class="text-center py-3">
+                        <p class="text-muted mb-0">No upcoming events</p>
+                    </li>
+                    {% endfor %}
                 </ul>
             </div>
         </div>

@@ -27,5 +27,6 @@ urlpatterns = [
     path('notifications/', include('user_notifications.urls')),
     path('system-notifications/', include('notifications.urls')),
     path('messaging/', include('messaging.urls')),
+    path('events/', include('events.urls', namespace='events')),
     path('', include('posts.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

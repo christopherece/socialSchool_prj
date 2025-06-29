@@ -34,9 +34,55 @@
         }
         
         .card {
-            border-radius: 12px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border: none;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            background-color: #ffffff !important;
             margin-bottom: 24px;
+        }
+
+        .post-create-form {
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .post-create-form textarea {
+            border: 1px solid #90949C !important;
+            border-radius: 4px !important;
+            padding: 10px !important;
+            font-size: 16px !important;
+            resize: none !important;
+            min-height: 100px !important;
+            box-sizing: border-box !important;
+            background-color: #ffffff !important;
+        }
+
+        /* Dark mode textarea background */
+        .dark-mode .post-create-form textarea {
+            background-color: #666666 !important;
+        }
+
+        .post-create-form textarea:focus {
+            outline: none;
+            border-color: #90949C;
+            box-shadow: 0 0 0 2px rgba(144, 148, 156, 0.1);
+        }
+
+        .input-group {
+            border: 1px solid #90949C !important;
+            border-radius: 4px !important;
+            background-color: #ffffff !important;
+        }
+
+        .input-group .form-control {
+            border: none !important;
+            padding: 10px !important;
+        }
+
+        .input-group .btn {
+            border-top-right-radius: 4px !important;
+            border-bottom-right-radius: 4px !important;
         }
         
         .card-body {
@@ -48,6 +94,30 @@
         .user-item {
             border-bottom: 1px solid rgba(0,0,0,0.05);
             padding: 0.75rem 0;
+        }
+
+        .card-header a {
+            text-decoration: none;
+            color: var(--text-color);
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+
+        .card-header a:hover {
+            color: #0073e6;
+            text-decoration: none;
+        }
+
+        .user-item a {
+            text-decoration: none;
+            color: var(--text-color);
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+
+        .user-item a:hover {
+            color: #0073e6;
+            text-decoration: none;
         }
         .user-item:last-child {
             border-bottom: none;
@@ -77,7 +147,7 @@
         
         /* Dark mode CSS */
         :root {
-            --primary-bg: #ffffff;
+            --primary-bg: rgb(244, 242, 238);
             --secondary-bg: #f8f9fa;
             --text-color: #212529;
             --navbar-bg: #343a40;
@@ -86,17 +156,94 @@
         }
 
         .dark-mode {
-            --primary-bg: #1a1a1a;
-            --secondary-bg: #2d2d2d;
+            --primary-bg: #000000;
+            --secondary-bg: #1a1a1a;
             --text-color: #ffffff;
-            --navbar-bg: #1a1a1a;
+            --navbar-bg: #000000;
             --navbar-text: #ffffff;
-            --card-bg: #2d2d2d;
+            --card-bg: #1a1a1a;
         }
 
         body {
             background-color: var(--primary-bg);
             color: var(--text-color);
+        }
+
+        /* Dark mode text overrides */
+        .dark-mode .card-header,
+        .dark-mode .card-body,
+        .dark-mode .list-group-item,
+        .dark-mode .nav-link,
+        .dark-mode .navbar-brand,
+        .dark-mode .dropdown-item,
+        .dark-mode .dropdown-header,
+        .dark-mode .form-label,
+        .dark-mode .small,
+        .dark-mode .text-muted,
+        .dark-mode .btn-light {
+            color: var(--text-color) !important;
+        }
+
+        .dark-mode .badge {
+            color: #000000 !important;
+        }
+
+        /* Username dropdown styles */
+        .dark-mode .dropdown-menu {
+            background-color: #1a1a1a !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        /* Comment box styles */
+        .dark-mode .input-group {
+            background-color: #666666 !important; /* Much lighter grey background */
+        }
+
+        .dark-mode .form-control {
+            background-color: #666666 !important; /* Much lighter grey background */
+            border-color: rgba(255, 255, 255, 0.1) !important;
+            color: var(--text-color) !important;
+        }
+
+        .dark-mode .form-control:focus {
+            background-color: #666666 !important; /* Much lighter grey background */
+            border-color: rgba(255, 255, 255, 0.2) !important;
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1) !important;
+        }
+
+        .dark-mode .dropdown-item {
+            background-color: #1a1a1a !important;
+            color: var(--text-color) !important;
+        }
+
+        .dark-mode .dropdown-item:hover {
+            background-color: #2d2d2d !important;
+            color: var(--text-color) !important;
+        }
+
+        .dark-mode .dropdown-divider {
+            border-color: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        /* Comment container styles */
+        .dark-mode .comments-container {
+            background-color: #666666 !important;
+            border-radius: 0.5rem;
+            padding: 1rem;
+        }
+
+        .dark-mode .comment {
+            background-color: #666666 !important;
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+        }
+
+        .dark-mode .comment strong {
+            color: var(--text-color) !important;
+        }
+
+        .dark-mode .text-muted {
+            color: rgba(255, 255, 255, 0.7) !important;
         }
 
         .navbar {
@@ -239,7 +386,7 @@
                                                     </div>
                                                 {% endif %}
                                                 <div>
-                                                    <h6 class="mb-1 small">{{ notification.message }}</h6>
+                                                    <h6 class="mb-1">{{ notification.message }}</h6>
                                                     <small class="text-muted">{{ notification.created_at|timesince }} ago</small>
                                                 </div>
                                             </div>
@@ -309,7 +456,16 @@
      </nav>
 
     <div class="container mt-4">
-        {% block content %}{% endblock %}
+        <div class="row">
+            <div class="col">
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                {% block sidebar %}{% endblock %}
+            </div>
+        </div>
     </div>
 
     <!-- Bootstrap JS -->

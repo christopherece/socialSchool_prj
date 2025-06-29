@@ -13,15 +13,31 @@
                 <div class="card-body">
                     <form method="POST" class="needs-validation" novalidate>
                         {% csrf_token %}
+                        
+                        {% if form.errors %}
+                        <div class="alert alert-danger">
+                            Please correct the errors below:
+                            <ul>
+                                {% for field in form %}
+                                    {% if field.errors %}
+                                        <li>{{ field.label }}: {{ field.errors.as_text }}</li>
+                                    {% endif %}
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+
                         <div class="mb-3">
                             <label for="{{ form.title.id_for_label }}" class="form-label">Title</label>
                             {{ form.title }}
+                            <div class="form-text">Enter a descriptive title for your event</div>
                             <div class="invalid-feedback">{{ form.title.errors.as_text }}</div>
                         </div>
                         
                         <div class="mb-3">
                             <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
                             {{ form.description }}
+                            <div class="form-text">Provide details about the event</div>
                             <div class="invalid-feedback">{{ form.description.errors.as_text }}</div>
                         </div>
                         
@@ -29,11 +45,13 @@
                             <div class="col-md-6 mb-3">
                                 <label for="{{ form.date.id_for_label }}" class="form-label">Date</label>
                                 {{ form.date }}
+                                <div class="form-text">Select the event date</div>
                                 <div class="invalid-feedback">{{ form.date.errors.as_text }}</div>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="{{ form.time.id_for_label }}" class="form-label">Time</label>
                                 {{ form.time }}
+                                <div class="form-text">Select the event time</div>
                                 <div class="invalid-feedback">{{ form.time.errors.as_text }}</div>
                             </div>
                         </div>
@@ -41,17 +59,21 @@
                         <div class="mb-3">
                             <label for="{{ form.location.id_for_label }}" class="form-label">Location</label>
                             {{ form.location }}
+                            <div class="form-text">Where will the event take place?</div>
                             <div class="invalid-feedback">{{ form.location.errors.as_text }}</div>
                         </div>
                         
                         <div class="mb-3">
                             <label for="{{ form.event_type.id_for_label }}" class="form-label">Event Type</label>
                             {{ form.event_type }}
+                            <div class="form-text">Select the type of event</div>
                             <div class="invalid-feedback">{{ form.event_type.errors.as_text }}</div>
                         </div>
                         
-                        <button type="submit" class="btn btn-primary">Create Event</button>
-                        <a href="{% url 'events:list' %}" class="btn btn-secondary">Cancel</a>
+                        <div class="d-flex justify-content-end">
+                            <a href="{% url 'events:list' %}" class="btn btn-secondary me-2">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Create Event</button>
+                        </div>
                     </form>
                 </div>
             </div>

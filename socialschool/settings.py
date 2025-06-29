@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'notifications',
     'crispy_forms',
     'messaging',
+    'events',
 ]
 
 MIDDLEWARE = [
@@ -59,6 +60,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'socialschool.middleware.LoginRequiredMiddleware',
 ]
 
 ROOT_URLCONF = 'socialschool.urls'
@@ -75,6 +77,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'notifications.context_processors.notification_count',
                 'messaging.context_processors.unread_message_count',
+                'events.context_processors.upcoming_events',
             ],
         },
     },

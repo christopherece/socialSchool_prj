@@ -28,8 +28,9 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-# Login settings
+# Login/Logout settings
 LOGIN_REDIRECT_URL = 'posts:home'
+LOGOUT_REDIRECT_URL = 'login'
 
 
 # Application definition
@@ -43,9 +44,11 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'users',
     'posts',
+    'user_notifications',
     'profiles',
     'notifications',
     'crispy_forms',
+    'messaging',
 ]
 
 MIDDLEWARE = [
@@ -70,6 +73,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'notifications.context_processors.notification_count',
+                'messaging.context_processors.unread_message_count',
             ],
         },
     },

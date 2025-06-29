@@ -1,0 +1,9 @@
+<a class="nav-link" href="{% url 'messaging:inbox' %}">
+    <i class="fas fa-bell"></i>
+    {% if unread_count > 0 %}
+        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+            {{ unread_count }}
+            <span class="visually-hidden">unread notifications</span>
+        </span>
+    {% endif %}
+</a>

@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ user.username }}'s Profile{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <!-- Profile Header -->
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="user-avatar me-3">
+                            {% if user.profile_picture %}
+                                <img src="{{ user.profile_picture.url }}" 
+                                     class="rounded-circle" 
+                                     style="width: 100px; height: 100px; object-fit: cover;"
+                                     alt="{{ user.username }}">
+                            {% else %}
+                                <img src="/media/user-default.png" 
+                                     class="rounded-circle" 
+                                     style="width: 100px; height: 100px; object-fit: cover;"
+                                     alt="{{ user.username }}">
+                            {% endif %}
+                        </div>
+                        <div>
+                            <h1 class="h3 mb-0">{{ user.username }}</h1>
+                            <div class="text-muted mb-2">
+                                <i class="fas fa-user-tag me-2"></i>{{ user.get_role_display }}
+                            </div>
+                            {% if user.email %}
+                            <p class="mb-0">
+                                <i class="fas fa-envelope me-2"></i>{{ user.email }}
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Bio -->
+                    {% if user.bio %}
+                    <div class="mb-4">
+                        <h4 class="card-title mb-3">About</h4>
+                        <p class="card-text">{{ user.bio }}</p>
+                    </div>
+                    {% endif %}
+
+                    <!-- Posts Section -->
+                    <div class="mb-4">
+                        <h4 class="card-title mb-3">Posts</h4>
+                        {% include 'posts/_post_list.html' with posts=user.posts.all %}
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div>
+                        <h4 class="card-title mb-3">Recent Activity</h4>
+                        <div class="activity-list">
+                            {% for activity in recent_activity %}
+                            <div class="activity-item mb-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="activity-icon me-3">
+                                        <i class="fas fa-{{ activity.icon }} text-muted"></i>
+                                    </div>
+                                    <div>
+                                        <p class="mb-1">{{ activity.description }}</p>
+                                        <small class="text-muted">{{ activity.timestamp|timesince }} ago</small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <p class="text-muted">No recent activity</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

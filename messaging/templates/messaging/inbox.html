@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Messages</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group" id="conversationsList">
+                        {% for item in conversations %}
+                        <a href="{% url 'messaging:conversation_detail' item.conversation.id %}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <div class="d-flex align-items-center">
+                                    {% if item.other_user.profile_picture %}
+                                    <img src="{{ item.other_user.profile_picture.url }}" 
+                                         class="rounded-circle me-2" 
+                                         style="width: 40px; height: 40px; object-fit: cover;"
+                                         alt="{{ item.other_user.username }}">
+                                    {% else %}
+                                    <div class="rounded-circle me-2" 
+                                         style="width: 40px; height: 40px; background-color: #f8f9fa; display: flex; align-items: center; justify-content: center;">
+                                        <span style="font-size: 16px; font-weight: bold;">{{ item.other_user.username|slice:':1'|upper }}</span>
+                                    </div>
+                                    {% endif %}
+                                    <div>
+                                        <h6 class="mb-1">{{ item.other_user.username }}</h6>
+                                        {% with last_message=item.conversation.message_set.last %}
+                                            <small class="text-muted">{{ last_message.content|truncatechars:50 }}</small>
+                                        {% endwith %}
+                                    </div>
+                                </div>
+                                <small class="text-muted">{{ item.conversation.updated_at|timesince }} ago</small>
+                            </div>
+                        </a>
+                        {% empty %}
+                        <div class="text-center py-4">
+                            <p>No conversations yet</p>
+                            <p>Start a conversation with someone!</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Active Users</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for user in active_users %}
+                        <a href="{% url 'messaging:start_conversation' user.username %}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                {% if user.profile_picture %}
+                                    <img src="{{ user.profile_picture.url }}" 
+                                         class="rounded-circle me-2" 
+                                         style="width: 40px; height: 40px; object-fit: cover;"
+                                         alt="{{ user.username }}">
+                                {% else %}
+                                    <div class="rounded-circle me-2" 
+                                         style="width: 40px; height: 40px; background-color: #f8f9fa; display: flex; align-items: center; justify-content: center;">
+                                        <span style="font-size: 16px; font-weight: bold;">{{ user.username|slice:':1'|upper }}</span>
+                                    </div>
+                                {% endif %}
+                                <div>
+                                    <h6 class="mb-1">{{ user.username }}</h6>
+                                    <small class="text-muted">Active now</small>
+                                </div>
+                            </div>
+                        </a>
+                        {% empty %}
+                        <div class="text-center py-4">
+                            <p>No other users are active</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

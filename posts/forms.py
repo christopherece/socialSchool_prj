@@ -49,6 +49,22 @@ class CommentForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['content'].label = ''
 
+class ReplyForm(forms.ModelForm):
+    class Meta:
+        model = Comment
+        fields = ('content',)
+        widgets = {
+            'content': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 1,
+                'placeholder': 'Add a reply...'
+            })
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['content'].label = ''
+
 
 class PostForm(forms.ModelForm):
     images = MultipleImageField(required=False)

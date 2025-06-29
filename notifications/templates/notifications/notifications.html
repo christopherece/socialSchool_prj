@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .notification-badge {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        background-color: #ff4444;
+        color: white;
+        border-radius: 50%;
+        padding: 2px 6px;
+        font-size: 12px;
+        min-width: 18px;
+        text-align: center;
+    }
+    .notification-item {
+        padding: 12px;
+        border-bottom: 1px solid #eee;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    .notification-item:hover {
+        background-color: #f5f5f5;
+    }
+    .notification-item.unread {
+        background-color: #f8f9fa;
+    }
+    .notification-content {
+        display: flex;
+        align-items: center;
+    }
+    .notification-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        margin-right: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+    }
+    .default-avatar {
+        background-color: #6c757d;
+        font-size: 18px;
+    }
+    .notification-time {
+        font-size: 12px;
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Notifications</h5>
+                    <div class="d-flex gap-2">
+                        <span id="unreadCount" class="badge bg-primary">{{ unread_count }}</span>
+                        <button id="markAllAsRead" class="btn btn-sm btn-outline-primary">Mark all as read</button>
+                        <button id="clearAll" class="btn btn-sm btn-outline-danger">Clear all</button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush" id="notificationsList">
+                        {% for notification in notifications %}
+                        <a href="{{ notification.url }}" 
+                           class="list-group-item list-group-item-action notification-item"
+                           data-notification-id="{{ notification.id }}"
+                           target="_blank">
+                            <div class="d-flex w-100 justify-content-between">
+                                <div class="d-flex align-items-center">
+                                    {% if notification.actor.profile_picture %}
+                                        <img src="{{ notification.actor.profile_picture.url }}" 
+                                             class="rounded-circle me-3" 
+                                             style="width: 40px; height: 40px; object-fit: cover;"
+                                             alt="{{ notification.actor.username }}">
+                                    {% else %}
+                                        <div class="rounded-circle me-3" 
+                                             style="width: 40px; height: 40px; background-color: #f8f9fa; display: flex; align-items: center; justify-content: center;">
+                                            <span style="font-size: 20px; font-weight: bold;">{{ notification.actor.username|slice:':1'|upper }}</span>
+                                        </div>
+                                    {% endif %}
+                                    <div>
+                                        <h6 class="mb-1">{{ notification.message }}</h6>
+                                        <small class="text-muted">{{ notification.created_at|timesince }} ago</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                        {% empty %}
+                        <div class="text-center py-3">
+                            <p class="text-muted">No notifications</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Handle notification click
+    document.querySelectorAll('.notification-item').forEach(item => {
+        item.addEventListener('click', async function(e) {
+            const notificationId = this.getAttribute('data-notification-id');
+            try {
+                // Mark as read
+                const response = await fetch(`/system-notifications/mark-as-read/${notificationId}/`, {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    // Remove from list with fade animation
+                    this.style.opacity = '0';
+                    setTimeout(() => {
+                        this.remove();
+                        updateUnreadCount();
+                    }, 300);
+                }
+            } catch (error) {
+                console.error('Error marking notification as read:', error);
+            }
+        });
+    });
+
+    // Handle Mark all as read
+    document.getElementById('markAllAsRead').addEventListener('click', async function() {
+        try {
+            const response = await fetch('/system-notifications/mark-all-as-read/', {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                // Update all notifications in the list
+                document.querySelectorAll('.notification-item').forEach(item => {
+                    item.style.opacity = '0';
+                    setTimeout(() => item.remove(), 300);
+                });
+                updateUnreadCount();
+            }
+        } catch (error) {
+            console.error('Error marking all notifications as read:', error);
+        }
+    });
+
+    // Handle Clear all
+    document.getElementById('clearAll').addEventListener('click', async function() {
+        if (confirm('Are you sure you want to clear all notifications?')) {
+            try {
+                // Clear all notifications from database
+                const response = await fetch('/system-notifications/clear-all/', {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                
+                if (response.ok) {
+                    // Remove all from list with fade animation
+                    document.querySelectorAll('.notification-item').forEach(item => {
+                        item.style.opacity = '0';
+                        setTimeout(() => item.remove(), 300);
+                    });
+                    updateUnreadCount();
+                }
+            } catch (error) {
+                console.error('Error clearing notifications:', error);
+            }
+        }
+    });
+
+    // Update unread count immediately when a notification is marked as read
+    function updateUnreadCount() {
+        fetch('/system-notifications/get-unread-count/', {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            const count = data.count;
+            const unreadCountElement = document.getElementById('unreadCount');
+            if (count > 0) {
+                unreadCountElement.textContent = count;
+            } else {
+                unreadCountElement.style.display = 'none';
+            }
+        })
+        .catch(error => console.error('Error updating unread count:', error));
+    }
+
+    // Update unread count every minute
+    setInterval(updateUnreadCount, 60000);
+
+    // Export updateUnreadCount for use in other scripts
+    window.updateNotificationCount = updateUnreadCount;
+</script>
+{% endblock %}

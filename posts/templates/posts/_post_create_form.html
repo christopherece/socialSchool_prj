@@ -1,0 +1,161 @@
+{% load crispy_forms_tags %}
+
+<div class="post-create-form">
+    <form method="POST" action="{% url 'posts:create' %}" enctype="multipart/form-data" id="postForm">
+        {% csrf_token %}
+        <div class="mb-3">
+            <textarea class="form-control" name="text" rows="3" placeholder="What's on your mind?" required></textarea>
+        </div>
+        
+        <!-- Preview Sections -->
+        <div id="imagePreview" class="mb-3 d-none">
+            <div class="d-flex align-items-center mb-3">
+                {% if user.profile_picture %}
+                    <img src="{{ user.profile_picture.url }}" 
+                         class="rounded-circle me-2" 
+                         style="width: 40px; height: 40px; object-fit: cover;"
+                         alt="Profile Picture">
+                {% else %}
+                    <img src="/media/user-default.png" 
+                         class="rounded-circle me-2" 
+                         style="width: 40px; height: 40px; object-fit: cover;"
+                         alt="Default Profile Picture">
+                {% endif %}
+                <div>
+                    <h5 class="mb-0">{{ user.username }}</h5>
+                    <small class="text-muted">{{ user.get_full_name }}</small>
+                </div>
+            </div>
+            <div class="row">
+                <!-- Image previews will be inserted here -->
+            </div>
+        </div>
+        
+        <div id="videoPreview" class="mb-3 d-none">
+            <div class="row">
+                <!-- Video preview will be inserted here -->
+            </div>
+        </div>
+        
+        <div id="filePreview" class="mb-3 d-none">
+            <div class="row">
+                <!-- File preview list will be inserted here -->
+            </div>
+        </div>
+        
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="post-options d-flex gap-2">
+                <label class="btn btn-outline-secondary">
+                    <input type="file" name="images" accept="image/*" multiple hidden id="imageInput">
+                    <i class="fas fa-image"></i> Photo
+                </label>
+                <label class="btn btn-outline-secondary">
+                    <input type="file" name="video" accept="video/*" hidden id="videoInput">
+                    <i class="fas fa-video"></i> Video
+                </label>
+                <label class="btn btn-outline-secondary">
+                    <input type="file" name="files" accept=".pdf,.doc,.docx,.txt,.xlsx,.ppt,.pptx" multiple hidden id="fileInput">
+                    <i class="fas fa-file"></i> File
+                </label>
+                <button type="submit" class="btn btn-primary">Post</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+// Image Preview
+const imageInput = document.getElementById('imageInput');
+const imagePreview = document.getElementById('imagePreview');
+
+imageInput.addEventListener('change', function(e) {
+    const previewRow = imagePreview.querySelector('.row');
+    previewRow.innerHTML = '';
+    
+    if (this.files.length === 0) {
+        imagePreview.classList.add('d-none');
+        return;
+    }
+    
+    imagePreview.classList.remove('d-none');
+    
+    for (let i = 0; i < this.files.length; i++) {
+        const file = this.files[i];
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.className = 'img-thumbnail col-3';
+                img.style.maxHeight = '150px';
+                img.style.margin = '5px';
+                previewRow.appendChild(img);
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+});
+
+// Video Preview
+const videoInput = document.getElementById('videoInput');
+const videoPreview = document.getElementById('videoPreview');
+
+videoInput.addEventListener('change', function(e) {
+    const previewRow = videoPreview.querySelector('.row');
+    previewRow.innerHTML = '';
+    
+    if (this.files.length === 0) {
+        videoPreview.classList.add('d-none');
+        return;
+    }
+    
+    videoPreview.classList.remove('d-none');
+    
+    const file = this.files[0];
+    if (file.type.startsWith('video/')) {
+        const video = document.createElement('video');
+        video.className = 'col-12';
+        video.style.maxHeight = '200px';
+        video.controls = true;
+        video.style.margin = '5px';
+        
+        const source = document.createElement('source');
+        source.src = URL.createObjectURL(file);
+        source.type = file.type;
+        video.appendChild(source);
+        previewRow.appendChild(video);
+    }
+});
+
+// File Preview
+const fileInput = document.getElementById('fileInput');
+const filePreview = document.getElementById('filePreview');
+
+fileInput.addEventListener('change', function(e) {
+    const previewRow = filePreview.querySelector('.row');
+    previewRow.innerHTML = '';
+    
+    if (this.files.length === 0) {
+        filePreview.classList.add('d-none');
+        return;
+    }
+    
+    filePreview.classList.remove('d-none');
+    
+    for (let i = 0; i < this.files.length; i++) {
+        const file = this.files[i];
+        const div = document.createElement('div');
+        div.className = 'col-12 mb-2';
+        
+        const icon = document.createElement('i');
+        icon.className = 'fas fa-file-alt me-2';
+        
+        const fileName = document.createElement('span');
+        fileName.textContent = file.name;
+        
+        div.appendChild(icon);
+        div.appendChild(fileName);
+        previewRow.appendChild(div);
+    }
+});
+</script>

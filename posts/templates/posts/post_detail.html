@@ -1,0 +1,255 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ post.user.username }}'s Post - School Social{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <!-- Post Content -->
+            <div class="card mb-4">
+                <div class="card-header d-flex align-items-center">
+                    <img src="{{ post.user.profile_picture.url }}" 
+                         class="rounded-circle me-2" 
+                         style="width: 40px; height: 40px; object-fit: cover;"
+                         alt="{{ post.user.username }}">
+                    <div>
+                        <h5 class="mb-0">{{ post.user.username }}</h5>
+                        <small class="text-muted">{{ post.created_at|timesince }} ago</small>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p>{{ post.text }}</p>
+                    
+                    <!-- Images -->
+                    {% if post.images.exists %}
+                    <div class="row mb-3">
+                        {% for image in post.images.all %}
+                        <div class="col-md-6 mb-3">
+                            <a href="{{ image.image.url }}" data-lightbox="post-images">
+                                <img src="{{ image.image.url }}" 
+                                     class="img-fluid rounded" 
+                                     style="max-height: 300px; object-fit: cover;"
+                                     alt="Post image">
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Video -->
+                    {% if post.video %}
+                    <div class="mb-3">
+                        <video controls class="w-100">
+                            <source src="{{ post.video.video.url }}" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Files -->
+                    {% if post.files.exists %}
+                    <div class="mb-3">
+                        <h6 class="mb-2">Attached Files:</h6>
+                        <div class="row">
+                            {% for file in post.files.all %}
+                            <div class="col-12 mb-2">
+                                <a href="{{ file.file.url }}" class="text-decoration-none">
+                                    <i class="fas fa-file-alt me-2"></i>{{ file.file.name }}
+                                </a>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="like-section me-3">
+                            <form id="likeForm" method="post" action="{% url 'posts:like' post.id %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-link p-0">
+                                    <i class="fas fa-heart {% if user_liked %}text-danger{% endif %} me-2"></i>
+                                    <span id="likesCount">{{ likes_count }}</span>
+                                </button>
+                            </form>
+                        </div>
+                        <div class="comment-section">
+                            <i class="fas fa-comment me-2"></i>
+                            <span>{{ comments.count }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    {% if post.user == request.user %}
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'posts:edit' post.id %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-edit me-1"></i>Edit
+                        </a>
+                        <a href="{% url 'posts:delete' post.id %}" class="btn btn-sm btn-outline-danger">
+                            <i class="fas fa-trash me-1"></i>Delete
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Comments -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Comments</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Add Comment Form -->
+                    <form id="commentForm" method="post" action="{% url 'posts:comment' post.id %}" class="mb-3">
+                        {% csrf_token %}
+                        <div class="input-group">
+                            {{ comment_form.content }}
+                            <button type="submit" class="btn btn-primary">Comment</button>
+                        </div>
+                    </form>
+
+                    <!-- Comments List -->
+                    {% if comments %}
+                    <div id="commentsList">
+                        {% for comment in comments %}
+                        <div class="comment-item mb-3 border-bottom pb-3">
+                            <div class="d-flex align-items-start">
+                                <div class="flex-shrink-0">
+                                    {% if comment.user.profile_picture %}
+                                        <img src="{{ comment.user.profile_picture.url }}" 
+                                             class="rounded-circle me-2" 
+                                             style="width: 40px; height: 40px; object-fit: cover;"
+                                             alt="{{ comment.user.username }}">
+                                    {% else %}
+                                        <div class="rounded-circle me-2" 
+                                             style="width: 40px; height: 40px; background-color: #f8f9fa; display: flex; align-items: center; justify-content: center;">
+                                            <span style="font-size: 20px; font-weight: bold;">{{ comment.user.username|slice:':1'|upper }}</span>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <strong>{{ comment.user.username }}</strong>
+                                            <small class="text-muted">{{ comment.created_at|timesince }} ago</small>
+                                        </div>
+                                    </div>
+                                    <p class="mb-2">{{ comment.content }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-3">
+                        <p class="text-muted">No comments yet</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .like-section button {
+        color: inherit;
+    }
+    .like-section button:hover {
+        color: #dc3545;
+    }
+    .comment-item {
+        transition: background-color 0.2s;
+    }
+    .comment-item:hover {
+        background-color: #f8f9fa;
+    }
+</style>
+
+<script>
+    // Handle like button click
+    document.getElementById('likeForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const form = this;
+        fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const likesCount = document.getElementById('likesCount');
+                likesCount.textContent = data.likes_count;
+                const heartIcon = form.querySelector('.fas');
+                if (data.liked) {
+                    heartIcon.classList.add('text-danger');
+                } else {
+                    heartIcon.classList.remove('text-danger');
+                }
+            } else {
+                alert('Error: ' + data.error);
+            }
+        });
+    });
+
+    // Handle comment form submission
+    document.getElementById('commentForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const form = this;
+        fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: new FormData(form)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Clear the comment form
+                form.reset();
+                
+                // Create new comment element
+                const commentItem = document.createElement('div');
+                commentItem.className = 'comment-item mb-3 border-bottom pb-3';
+                
+                // Add comment content
+                commentItem.innerHTML = `
+                    <div class="d-flex align-items-start">
+                        <div class="flex-shrink-0">
+                            <img src="${data.user.profile_picture}" 
+                                 class="rounded-circle me-2" 
+                                 style="width: 40px; height: 40px; object-fit: cover;"
+                                 alt="${data.user.username}">
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong>${data.user.username}</strong>
+                                    <small class="text-muted">${data.created_at}</small>
+                                </div>
+                            </div>
+                            <p class="mb-2">${data.content}</p>
+                        </div>
+                    </div>
+                `;
+                
+                // Add to comments list
+                const commentsList = document.getElementById('commentsList');
+                commentsList.insertBefore(commentItem, commentsList.firstChild);
+                
+                // Update notification count if function exists
+                if (typeof window.updateNotificationCount === 'function') {
+                    window.updateNotificationCount();
+                }
+            } else {
+                alert('Error: ' + data.error);
+            }
+        });
+    });
+</script>
+{% endblock %}

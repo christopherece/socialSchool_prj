@@ -21,8 +21,11 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('accounts/', include('django.contrib.auth.urls')),
     path('posts/', include('posts.urls')),
     path('users/', include('users.urls')),
-    path('accounts/', include(('django.contrib.auth.urls', 'accounts'), namespace='accounts')),
+    path('notifications/', include('user_notifications.urls')),
+    path('system-notifications/', include('notifications.urls')),
+    path('messaging/', include('messaging.urls')),
     path('', include('posts.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ event.title }} - Event Details{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">{{ event.title }}</h4>
+                </div>
+                <div class="card-body">
+                    <div class="event-info">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <h5 class="mb-1">{{ event.get_event_type_display }}</h5>
+                                <small class="text-muted">{{ event.date|date:"F j, Y" }} at {{ event.time|time:"H:i" }}</small>
+                            </div>
+                            <div class="event-type-badge {{ event.get_event_type_display|lower }}">
+                                {{ event.get_event_type_display }}
+                            </div>
+                        </div>
+                        
+                        <p class="card-text mb-4">{{ event.description }}</p>
+                        
+                        <div class="mb-3">
+                            <strong>Location:</strong> {{ event.location }}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <strong>Created by:</strong> {{ event.created_by.username }}
+                        </div>
+                        
+                        {% if event.is_today %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>This event is happening today!
+                        </div>
+                        {% endif %}
+                        
+                        <div class="mt-4">
+                            <a href="{% url 'events:list' %}" class="btn btn-secondary">Back to Events</a>
+                            {% if request.user.role == 'admin' %}
+                            <a href="{% url 'events:create' %}" class="btn btn-primary">Create New Event</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

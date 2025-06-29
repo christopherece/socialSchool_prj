@@ -1,0 +1,7 @@
+{% load static %}
+<a href="{% url 'notifications:notifications' %}" class="notification-icon">
+    <i class="fas fa-bell"></i>
+    {% if unread_count > 0 %}
+    <span class="notification-badge">{{ unread_count }}</span>
+    {% endif %}
+</a>

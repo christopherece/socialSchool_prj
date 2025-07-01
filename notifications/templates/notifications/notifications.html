@@ -106,13 +106,14 @@
 </div>
 
 <script>
+    const userId = '{{ request.user.id }}';
     // Handle notification click
     document.querySelectorAll('.notification-item').forEach(item => {
         item.addEventListener('click', async function(e) {
             const notificationId = this.getAttribute('data-notification-id');
             try {
                 // Mark as read
-                const response = await fetch(`/system-notifications/mark-as-read/${notificationId}/`, {
+                const response = await fetch(`/system-notifications/${userId}/mark-as-read/${notificationId}/`, {
                     method: 'GET',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest'
@@ -137,7 +138,7 @@
     // Handle Mark all as read
     document.getElementById('markAllAsRead').addEventListener('click', async function() {
         try {
-            const response = await fetch('/system-notifications/mark-all-as-read/', {
+            const response = await fetch(`/system-notifications/${userId}/mark-all-as-read/`, {
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest'
                 }
@@ -162,7 +163,7 @@
         if (confirm('Are you sure you want to clear all notifications?')) {
             try {
                 // Clear all notifications from database
-                const response = await fetch('/system-notifications/clear-all/', {
+                const response = await fetch(`/system-notifications/${userId}/clear-all/`, {
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest'
                     }
@@ -184,7 +185,7 @@
 
     // Update unread count immediately when a notification is marked as read
     function updateUnreadCount() {
-        fetch('/system-notifications/get-unread-count/', {
+        fetch(`/system-notifications/${userId}/get-unread-count/`, {
             headers: {
                 'X-Requested-With': 'XMLHttpRequest'
             }

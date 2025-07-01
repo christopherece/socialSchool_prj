@@ -36,11 +36,11 @@
                     {% for active_user in active_users %}
                     <div class="user-item d-flex align-items-center mb-3">
                         <div class="user-avatar me-2">
-                            {% if active_user.profile_picture %}
-                                <img src="{{ active_user.profile_picture.url }}" 
+                            {% if active_user.user.custom_user.profile_picture %}
+                                <img src="{{ active_user.user.custom_user.profile_picture.url }}" 
                                      class="rounded-circle" 
                                      style="width: 40px; height: 40px; object-fit: cover;"
-                                     alt="{{ active_user.username }}">
+                                     alt="{{ active_user.user.username }}">
                             {% else %}
                                 <img src="/media/user-default.png" 
                                      class="rounded-circle" 
@@ -50,9 +50,9 @@
                         </div>
                         <div class="user-info">
                             <h5 class="mb-1 d-flex align-items-center">
-                                <a href="{% url 'users:profile' active_user.username %}">{{ active_user.username }}</a>
-                                {% if active_user.username != user.username %}
-                                    <a href="{% url 'messaging:start_conversation' active_user.username %}" 
+                                <a href="{% url 'users:profile' active_user.user.username %}">{{ active_user.user.username }}</a>
+                                {% if active_user.user.username != user.username %}
+                                    <a href="{% url 'messaging:start_conversation' active_user.user.username %}" 
                                        class="ms-2 text-primary" 
                                        title="Start chat">
                                         <i class="fas fa-envelope"></i>

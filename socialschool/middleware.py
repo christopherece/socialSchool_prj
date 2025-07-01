@@ -8,7 +8,7 @@ class LoginRequiredMiddleware:
         self.public_urls = [
             '/accounts/login/',
             '/accounts/logout/',
-            '/accounts/register/',
+            '/users/register/',
             '/admin/',
             '/accounts/password_reset/',
             '/accounts/password_reset/done/',

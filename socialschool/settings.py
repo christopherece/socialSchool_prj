@@ -29,8 +29,9 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 # Login/Logout settings
+LOGIN_URL = 'users:login'
 LOGIN_REDIRECT_URL = 'posts:home'
-LOGOUT_REDIRECT_URL = 'login'
+LOGOUT_REDIRECT_URL = 'users:login'
 
 
 # Application definition
@@ -140,7 +141,7 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Authentication
-AUTH_USER_MODEL = 'users.CustomUser'
+# Using Django's default User model
 
 # Email settings
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # For development

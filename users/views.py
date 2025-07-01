@@ -2,20 +2,44 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.auth import get_user_model
-from .forms import UserRegistrationForm, ProfileForm
+from .forms import UserRegistrationForm, CustomUserForm, ProfileForm
 
 User = get_user_model()
 
 def register(request):
     if request.method == 'POST':
-        form = UserRegistrationForm(request.POST)
-        if form.is_valid():
-            user = form.save()
+        user_form = UserRegistrationForm(request.POST)
+        custom_user_form = CustomUserForm(request.POST)
+        if user_form.is_valid() and custom_user_form.is_valid():
+            user = user_form.save()
+            custom_user = custom_user_form.save(commit=False)
+            custom_user.user = user
+            custom_user.save()
             messages.success(request, 'Account created successfully!')
             return redirect('users:login')
     else:
-        form = UserRegistrationForm()
-    return render(request, 'users/register.html', {'form': form})
+        user_form = UserRegistrationForm()
+        custom_user_form = CustomUserForm()
+    
+    return render(request, 'users/register.html', {
+        'user_form': user_form,
+        'custom_user_form': custom_user_form
+    })
+
+@login_required
+def edit_profile(request):
+    if request.method == 'POST':
+        profile_form = ProfileForm(request.POST, request.FILES, instance=request.user.custom_user)
+        if profile_form.is_valid():
+            profile_form.save()
+            messages.success(request, 'Profile updated successfully!')
+            return redirect('users:profile', username=request.user.username)
+    else:
+        profile_form = ProfileForm(instance=request.user.custom_user)
+    
+    return render(request, 'users/edit_profile.html', {
+        'profile_form': profile_form
+    })
 
 @login_required
 def profile(request, username):
@@ -51,15 +75,4 @@ def profile(request, username):
         'recent_activity': recent_activity
     })
 
-@login_required
-def edit_profile(request):
-    user = request.user
-    if request.method == 'POST':
-        form = ProfileForm(request.POST, request.FILES, instance=user)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Profile updated successfully!')
-            return redirect('users:profile', username=user.username)
-    else:
-        form = ProfileForm(instance=user)
-    return render(request, 'users/edit_profile.html', {'form': form})
+

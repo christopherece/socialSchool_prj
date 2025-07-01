@@ -1,4 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
+import json
+
 from django.template.loader import render_to_string
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -9,7 +11,7 @@ from django.utils import timezone
 from .models import Post, PostImage, PostVideo, PostFile, Comment, Like
 from .forms import PostForm, CommentForm
 from users.models import CustomUser
-from user_notifications.models import Notification
+from notifications.utils import create_notification
 
 from django.core.paginator import Paginator
 
@@ -56,8 +58,8 @@ def home(request):
         return JsonResponse({'posts_html': posts_html})
     
     active_users = CustomUser.objects.filter(
-        last_login__gte=timezone.now() - timezone.timedelta(hours=24)
-    ).order_by('-last_login')[:5]
+        user__last_login__gte=timezone.now() - timezone.timedelta(hours=24)
+    ).order_by('-user__last_login')[:5]
     
     return render(request, 'posts/home.html', {
         'page_obj': page_obj,
@@ -223,19 +225,41 @@ def edit_post(request, pk):
 
 @login_required
 def add_comment(request, pk):
-    post = get_object_or_404(Post, pk=pk)
-    
-    if request.method == 'POST':
-        form = CommentForm(request.POST)
-        if form.is_valid():
-            comment = form.save(commit=False)
-            comment.post = post
-            comment.user = request.user
-            comment.save()
+    try:
+        print(f"Adding comment for post {pk}")
+        post = get_object_or_404(Post, pk=pk)
+        print(f"Found post: {post}")
+        
+        if request.method == 'POST':
+            # Handle both form and JSON data
+            if request.content_type == 'application/json':
+                try:
+                    data = json.loads(request.body)
+                    content = data.get('content', '')
+                    print(f"Received JSON data: {data}")
+                except json.JSONDecodeError as e:
+                    print(f"JSON decode error: {str(e)}")
+                    return JsonResponse({'error': 'Invalid JSON data'}, status=400)
+            else:
+                content = request.POST.get('content', '')
+                print(f"Received form data: {content}")
+            
+            if not content:
+                print("No content provided")
+                return JsonResponse({'error': 'Comment content is required'}, status=400)
+            
+            # Create the comment
+            print(f"Creating comment for user {request.user.username}")
+            comment = Comment.objects.create(
+                post=post,
+                user=request.user,
+                content=content
+            )
+            print(f"Created comment: {comment}")
             
             # Create notification if user commented on someone else's post
             if post.user != request.user:
-                from notifications.utils import create_notification
+                print(f"Creating notification for post owner {post.user.username}")
                 create_notification(
                     user=post.user,
                     actor=request.user,
@@ -250,15 +274,22 @@ def add_comment(request, pk):
                 'comment_id': comment.id,
                 'user': {
                     'username': request.user.username,
-                    'profile_picture': request.user.profile_picture.url if request.user.profile_picture else None
+                    'profile_picture': request.user.custom_user.profile_picture.url if request.user.custom_user.profile_picture else None
                 },
                 'content': comment.content,
                 'created_at': comment.created_at.strftime('%Y-%m-%d %H:%M')
             })
+            
+        return JsonResponse({'error': 'Invalid request method'}, status=405)
         
-        return JsonResponse({'error': form.errors.as_json()}, status=400)
-    
-    return JsonResponse({'error': 'Invalid request method'}, status=405)
+    except Exception as e:
+        print(f"Error in add_comment: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
+        return JsonResponse({
+            'error': f'An unexpected error occurred: {str(e)}',
+            'success': False
+        }, status=500)
 
 @login_required
 def add_reply(request, post_pk, comment_pk):
@@ -315,54 +346,60 @@ def add_reply(request, post_pk, comment_pk):
 @login_required
 def like_post(request, pk):
     try:
+        # Get the post
         post = get_object_or_404(Post, pk=pk)
         user = request.user
-        if not user.is_authenticated:
-            return JsonResponse({
-                'error': 'User not authenticated',
-                'success': False
-            }, status=401)
         
+        # Toggle the like
         liked = Like.toggle_like(post, user)
         
         # Create notification if user liked the post
         if liked and post.user != user:
-            from notifications.utils import create_notification
-            create_notification(
-                user=post.user,
-                actor=user,
-                notification_type='like',
-                message=f'{user.username} liked your post',
-                target_id=post.id,
-                target_content_type='post',
-                target_url=request.build_absolute_uri(post.get_absolute_url())
-            )      
+            try:
+                from notifications.utils import create_notification
+                create_notification(
+                    user=post.user,
+                    actor=user,
+                    notification_type='like',
+                    message=f'{user.username} liked your post',
+                    target_id=post.id,
+                    target_content_type='post',
+                    target_url=request.build_absolute_uri(post.get_absolute_url())
+                )
+            except Exception as e:
+                print(f"Error creating notification: {str(e)}")
+                # Don't return an error if notification fails
         
+        # Get the likes count
         likes_count = Like.get_likes_count(post)
         
+        # Prepare response
         response_data = {
             'success': True,
             'liked': liked,
-            'likes_count': likes_count
+            'likes_count': likes_count,
+            'user': {
+                'username': user.username,
+                'profile_picture': user.custom_user.profile_picture.url if user.custom_user.profile_picture else None
+            }
         }
         
+        # Log the operation
         print(f"Like operation for post {pk} by {user.username}")
         print(f"Success: {liked}, Likes count: {likes_count}")
         
         return JsonResponse(response_data)
         
     except Post.DoesNotExist:
-        error_msg = f'Post with ID {pk} does not exist'
-        print(f"Error in like_post: {error_msg}")
         return JsonResponse({
-            'error': error_msg,
+            'error': 'Post not found',
             'success': False
         }, status=404)
+    
     except Exception as e:
-        error_msg = str(e)
-        print(f"Error in like_post: {error_msg}")
+        print(f"Error in like_post: {str(e)}")
         return JsonResponse({
-            'error': f"An unexpected error occurred: {error_msg}",
+            'error': 'Failed to toggle like',
             'success': False
         }, status=500)
 

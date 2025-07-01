@@ -107,14 +107,6 @@ class Comment(models.Model):
         
     def __str__(self):
         return f"Comment by {self.user.username} on post {self.post.id}"
-    
+        
     def is_reply(self):
         return self.parent is not None
-    created_at = models.DateTimeField(auto_now_add=True)
-    parent = models.ForeignKey('self', null=True, blank=True, related_name='replies', on_delete=models.CASCADE)
-    
-    class Meta:
-        ordering = ['-created_at']
-        
-    def __str__(self):
-        return f"Comment by {self.user.username} on post {self.post.id}"

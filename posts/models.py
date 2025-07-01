@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
+from notifications.utils import create_notification
 
 MEDIA_TYPES = [
     ('none', 'None'),
@@ -22,6 +23,9 @@ class Post(models.Model):
         
     def __str__(self):
         return f"Post by {self.user.username} on {self.created_at}"
+
+    def get_absolute_url(self):
+        return reverse('posts:detail', args=[self.id])
 
 class PostImage(models.Model):
     post = models.ForeignKey(Post, related_name='images', on_delete=models.CASCADE)
@@ -86,12 +90,20 @@ class Like(models.Model):
     def toggle_like(cls, post, user):
         """Toggle like status for a post by a user"""
         try:
-            like = cls.objects.get(post=post, user=user)
-            like.delete()
-            return False  # Unliked
-        except cls.DoesNotExist:
-            cls.objects.create(post=post, user=user)
-            return True  # Liked
+            # Use get_or_create to handle both cases
+            like, created = cls.objects.get_or_create(post=post, user=user)
+            
+            if created:
+                # If new like was created, return True (liked)
+                return True, True
+            else:
+                # If like existed, delete it and return False (unliked)
+                like.delete()
+                return False, True
+                
+        except Exception as e:
+            print(f"Error in toggle_like: {str(e)}")
+            return None, False  # (liked_status, success)
 
 
 class Comment(models.Model):
@@ -107,6 +119,19 @@ class Comment(models.Model):
         
     def __str__(self):
         return f"Comment by {self.user.username} on post {self.post.id}"
-        
+    
     def is_reply(self):
         return self.parent is not None
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        # Create notification if this is a comment (not a reply) and not self-comment
+        if not self.parent and self.post.user != self.user:
+            create_notification(
+                user=self.post.user,
+                actor=self.user,
+                notification_type='comment',
+                message=f'{self.user.username} commented on your post',
+                post=self.post,
+                url=self.post.get_absolute_url()
+            )

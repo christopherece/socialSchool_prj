@@ -260,21 +260,34 @@ def add_comment(request, pk):
             # Create notification if user commented on someone else's post
             if post.user != request.user:
                 print(f"Creating notification for post owner {post.user.username}")
-                create_notification(
-                    user=post.user,
-                    actor=request.user,
-                    notification_type='comment',
-                    message=f'{request.user.username} commented on your post',
-                    target_id=post.id,
-                    target_content_type='post'
-                )
+                try:
+                    create_notification(
+                        user=post.user,
+                        actor=request.user,
+                        notification_type='comment',
+                        message=f'{request.user.username} commented on your post',
+                        post=post,
+                        url=request.build_absolute_uri(post.get_absolute_url())
+                    )
+                except Exception as e:
+                    print(f"Error creating notification: {str(e)}")
+                    # Don't return error for notification failure, just log it
+                    pass
+            
+            # Get profile picture URL safely
+            profile_picture_url = None
+            try:
+                if hasattr(request.user, 'custom_user') and request.user.custom_user.profile_picture:
+                    profile_picture_url = request.user.custom_user.profile_picture.url
+            except Exception as e:
+                print(f"Error getting profile picture: {str(e)}")
             
             return JsonResponse({
                 'success': True,
                 'comment_id': comment.id,
                 'user': {
                     'username': request.user.username,
-                    'profile_picture': request.user.custom_user.profile_picture.url if request.user.custom_user.profile_picture else None
+                    'profile_picture': profile_picture_url
                 },
                 'content': comment.content,
                 'created_at': comment.created_at.strftime('%Y-%m-%d %H:%M')
@@ -286,8 +299,9 @@ def add_comment(request, pk):
         print(f"Error in add_comment: {str(e)}")
         import traceback
         print(traceback.format_exc())
+        # Return a more user-friendly error message
         return JsonResponse({
-            'error': f'An unexpected error occurred: {str(e)}',
+            'error': 'An error occurred while saving your comment. Please try again.',
             'success': False
         }, status=500)
 
@@ -351,7 +365,12 @@ def like_post(request, pk):
         user = request.user
         
         # Toggle the like
-        liked = Like.toggle_like(post, user)
+        liked, success = Like.toggle_like(post, user)
+        if not success:
+            return JsonResponse({
+                'error': 'Failed to toggle like',
+                'success': False
+            }, status=500)
         
         # Create notification if user liked the post
         if liked and post.user != user:
@@ -371,7 +390,19 @@ def like_post(request, pk):
                 # Don't return an error if notification fails
         
         # Get the likes count
-        likes_count = Like.get_likes_count(post)
+        try:
+            likes_count = Like.get_likes_count(post)
+        except Exception as e:
+            print(f"Error getting likes count: {str(e)}")
+            likes_count = 0
+        
+        # Get profile picture URL safely
+        profile_picture_url = None
+        try:
+            if hasattr(user, 'custom_user') and user.custom_user.profile_picture:
+                profile_picture_url = user.custom_user.profile_picture.url
+        except Exception as e:
+            print(f"Error getting profile picture: {str(e)}")
         
         # Prepare response
         response_data = {
@@ -380,7 +411,7 @@ def like_post(request, pk):
             'likes_count': likes_count,
             'user': {
                 'username': user.username,
-                'profile_picture': user.custom_user.profile_picture.url if user.custom_user.profile_picture else None
+                'profile_picture': profile_picture_url
             }
         }
         
@@ -397,9 +428,9 @@ def like_post(request, pk):
         }, status=404)
     
     except Exception as e:
-        print(f"Error in like_post: {str(e)}")
+        print(f"Unexpected error in like_post: {str(e)}")
         return JsonResponse({
-            'error': 'Failed to toggle like',
+            'error': f'An unexpected error occurred: {str(e)}',
             'success': False
         }, status=500)
 

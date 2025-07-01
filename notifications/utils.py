@@ -2,26 +2,38 @@ from .models import Notification
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 
-def create_notification(user, actor, notification_type, message, target_id=None, target_content_type=None, target_url=None):
-    """Create a notification for a user"""
-    notification = Notification(
-        user=user,
-        actor=actor,
+def create_notification(user, actor, notification_type, message, post=None, url=None):
+    """Create a notification for a user if it doesn't already exist"""
+    # Check if notification already exists
+    existing_notification = Notification.objects.filter(
+        sender=actor,
+        recipient=user,
         notification_type=notification_type,
-        message=message
+        post=post
+    ).first()
+
+    if existing_notification:
+        # If notification exists, update the message and mark it as unread
+        existing_notification.content = message
+        existing_notification.is_read = False
+        existing_notification.created_at = timezone.now()
+        existing_notification.save()
+        return existing_notification
+
+    # Create new notification if it doesn't exist
+    notification = Notification(
+        sender=actor,
+        recipient=user,
+        notification_type=notification_type,
+        content=message
     )
     
-    if target_id and target_content_type:
-        notification.target_id = target_id
-        notification.target_content_type = target_content_type
-        
-        # Set the notification URL based on content type
-        if target_content_type == 'post':
-            if target_url:
-                notification.url = target_url
-            else:
-                notification.url = reverse('posts:detail', args=[target_id])
-        # Add more content types as needed
-        
+    if post:
+        notification.post = post
+        if url:
+            notification.url = url
+        else:
+            notification.url = reverse('posts:detail', args=[post.id])
+    
     notification.save()
     return notification

@@ -1,7 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
-from notifications.utils import create_notification
+from django.contrib.auth import get_user_model
 
 MEDIA_TYPES = [
     ('none', 'None'),
@@ -80,30 +80,21 @@ class Like(models.Model):
 
     @classmethod
     def get_likes_count(cls, post):
-        try:
-            return cls.objects.filter(post=post).count()
-        except Exception as e:
-            print(f"Error in get_likes_count: {str(e)}")
-            return 0
+        return cls.objects.filter(post=post).count()
 
     @classmethod
     def toggle_like(cls, post, user):
         """Toggle like status for a post by a user"""
-        try:
-            # Use get_or_create to handle both cases
-            like, created = cls.objects.get_or_create(post=post, user=user)
-            
-            if created:
-                # If new like was created, return True (liked)
-                return True, True
-            else:
-                # If like existed, delete it and return False (unliked)
-                like.delete()
-                return False, True
-                
-        except Exception as e:
-            print(f"Error in toggle_like: {str(e)}")
-            return None, False  # (liked_status, success)
+        # Use get_or_create to handle both cases
+        like, created = cls.objects.get_or_create(post=post, user=user)
+        
+        if created:
+            # If new like was created, return True (liked)
+            return True, True
+        else:
+            # If like existed, delete it and return False (unliked)
+            like.delete()
+            return False, True
 
 
 class Comment(models.Model):
@@ -125,8 +116,23 @@ class Comment(models.Model):
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-        # Create notification if this is a comment (not a reply) and not self-comment
-        if not self.parent and self.post.user != self.user:
+        # Create notification for the comment author (if different from current user)
+        if self.parent and self.parent.user != self.user:
+            from notifications.utils import create_notification
+            User = get_user_model()
+            create_notification(
+                user=self.parent.user,
+                actor=self.user,
+                notification_type='reply',
+                message=f'{self.user.username} replied to your comment',
+                post=self.post,
+                url=self.post.get_absolute_url()
+            )
+        
+        # Create notification for the post owner if they're not the one being replied to
+        if self.post.user != self.user and (not self.parent or self.post.user != self.parent.user):
+            from notifications.utils import create_notification
+            User = get_user_model()
             create_notification(
                 user=self.post.user,
                 actor=self.user,

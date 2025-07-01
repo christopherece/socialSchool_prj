@@ -1,39 +1,23 @@
-from .models import Notification
-from django.contrib.auth import get_user_model
+from django.db import models
+from django.utils import timezone
 from django.urls import reverse
+from django.contrib.auth import get_user_model
+
+# Avoid circular import by using get_user_model
+User = get_user_model()
 
 def create_notification(user, actor, notification_type, message, post=None, url=None):
-    """Create a notification for a user if it doesn't already exist"""
-    # Check if notification already exists
-    existing_notification = Notification.objects.filter(
-        sender=actor,
-        recipient=user,
-        notification_type=notification_type,
-        post=post
-    ).first()
-
-    if existing_notification:
-        # If notification exists, update the message and mark it as unread
-        existing_notification.content = message
-        existing_notification.is_read = False
-        existing_notification.created_at = timezone.now()
-        existing_notification.save()
-        return existing_notification
-
-    # Create new notification if it doesn't exist
-    notification = Notification(
-        sender=actor,
-        recipient=user,
-        notification_type=notification_type,
-        content=message
-    )
-    
-    if post:
-        notification.post = post
-        if url:
-            notification.url = url
-        else:
-            notification.url = reverse('posts:detail', args=[post.id])
-    
-    notification.save()
-    return notification
+    """Create a notification for a user"""
+    try:
+        notification = Notification.objects.create(
+            sender=actor,
+            recipient=user,
+            notification_type=notification_type,
+            content=message,
+            post=post,
+            url=url
+        )
+        return notification
+    except Exception as e:
+        print(f"Error creating notification: {str(e)}")
+        return None

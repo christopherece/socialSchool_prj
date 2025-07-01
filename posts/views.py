@@ -10,8 +10,11 @@ from django.db.models import Count
 from django.utils import timezone
 from .models import Post, PostImage, PostVideo, PostFile, Comment, Like
 from .forms import PostForm, CommentForm
-from users.models import CustomUser
+from django.contrib.auth import get_user_model
 from notifications.utils import create_notification
+import logging
+
+logger = logging.getLogger(__name__)
 
 from django.core.paginator import Paginator
 
@@ -65,7 +68,8 @@ def home(request):
         'page_obj': page_obj,
         'comment_form': CommentForm(),
         'csrf_token': request.COOKIES.get('csrftoken'),
-        'active_users': active_users
+        'active_users': active_users,
+        'unread_notifications': unread_notifications
     })
 
 @login_required
@@ -331,16 +335,17 @@ def add_reply(request, post_pk, comment_pk):
                     target_content_type='post'
                 )
 
-            # Create notification for the post owner if they're not the one being replied to
-            if post.user != request.user and post.user != parent_comment.user:
+            # Create notification if this is a comment (not a reply) and not self-comment
+            if not reply.parent and reply.post.user != reply.user:
                 create_notification(
-                    user=post.user,
-                    actor=request.user,
-                    notification_type='reply',
-                    message=f'{request.user.username} replied to a comment on your post',
-                    target_id=post.id,
-                    target_content_type='post'
+                    user=reply.post.user,
+                    actor=reply.user,
+                    notification_type='comment',
+                    message=f'{reply.user.username} commented on your post',
+                    post=reply.post,
+                    url=reply.post.get_absolute_url()
                 )
+                reply.save(update_fields=['created_at'])
             
             return JsonResponse({
                 'success': True,
@@ -375,18 +380,18 @@ def like_post(request, pk):
         # Create notification if user liked the post
         if liked and post.user != user:
             try:
-                from notifications.utils import create_notification
-                create_notification(
+                notification = create_notification(
                     user=post.user,
                     actor=user,
                     notification_type='like',
                     message=f'{user.username} liked your post',
-                    target_id=post.id,
-                    target_content_type='post',
-                    target_url=request.build_absolute_uri(post.get_absolute_url())
+                    post=post,
+                    url=request.build_absolute_uri(post.get_absolute_url())
                 )
+                if notification:
+                    logger.info(f"Created notification {notification.id} for post {post.id} by {user.username}")
             except Exception as e:
-                print(f"Error creating notification: {str(e)}")
+                logger.error(f"Error creating notification: {str(e)}")
                 # Don't return an error if notification fails
         
         # Get the likes count
